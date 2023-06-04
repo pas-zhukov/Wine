@@ -29,7 +29,7 @@ pip list
 
 Если всё было сделано верно, сайт откроется:
 
-![img](images/site_screen.png, "Главная страница сайта")
+![img](/images/site_screen.png)
 
 
 ## Цели проекта
