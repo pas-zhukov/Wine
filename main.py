@@ -1,11 +1,25 @@
 import collections
 import re
 from datetime import date
+from argparse import ArgumentParser
+import os
 from pandas import read_excel
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 WINERY_FOUNDATION_YEAR = 1920
+
+
+def initialize_env():
+    """
+    Initializes the environment for the 'Новое русское вино' winery website.
+
+    """
+
+    arg_parser = ArgumentParser(description='Запуск сайта винодельни "Новое русское вино"')
+    arg_parser.add_argument('-p', '--path_to_xlsx', help="Путь к файлу с данными о товарах", default="products.xlsx")
+    args = arg_parser.parse_args()
+    os.environ["path_to_xlsx"] = args.path_to_xlsx
 
 
 def adjust_year_sign(years: int) -> str:
@@ -34,15 +48,17 @@ def read_products_xlsx(path: str = "products.xlsx") -> dict[str, list[dict[str, 
 
     """
 
-    products_table_df = read_excel(path, keep_default_na=False)
+    products_table = read_excel(path, keep_default_na=False)
     products_by_category = collections.defaultdict(list)
-    for _, row in products_table_df.iterrows():
-        products_by_category[row["Категория"]].append(row.drop("Категория").to_dict())
+    for _, product in products_table.iterrows():
+        products_by_category[product["Категория"]].append(product.drop("Категория").to_dict())
 
     return products_by_category
 
 
 if __name__ == "__main__":
+
+    initialize_env()
     env = Environment(
         loader=FileSystemLoader('.'),
         autoescape=select_autoescape(['html', 'xml'])
@@ -53,7 +69,7 @@ if __name__ == "__main__":
     rendered_page = template.render(
         winery_age=winery_age,
         year_sign=adjust_year_sign(winery_age),
-        product_cards=read_products_xlsx()
+        product_cards=read_products_xlsx(os.getenv("path_to_xlsx"))
     )
 
     with open('index.html', 'w', encoding="utf8") as file:
